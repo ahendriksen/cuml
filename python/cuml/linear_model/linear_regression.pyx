@@ -318,8 +318,16 @@ class LinearRegression(Base,
             # regression, i.e., a y vector with multiple columns.
             # We implement the regression in Python here.
 
-            # TODO: check algorithm and warn if we change it
-            # TODO: fail on normalize
+            if self.algo != 0:
+                warnings.warn("Changing solver to 'svd' as this is the " +
+                              "only solver that support multiple targets " +
+                              "currently.", UserWarning)
+                self.algo = 0
+            if self.normalize:
+                raise ValueError(
+                    "The normalize option is not supported when `y` has "
+                    "multiple columns."
+                )
 
             X_cupy = input_to_cupy_array(X).array
             y_cupy = input_to_cupy_array(y).array
