@@ -37,7 +37,7 @@ y_hat_single = lr.predict(X)
 y_hat_multi = lr_multi.predict(X)
 
 print("single predict: ", y_hat_single)
-print("multi predict : ", y_hat_multi)
+print("multi predict : ", y_hat_multi[:, 0])
 
 # Fail on normalize
 lr_multi = LinearRegression(fit_intercept=True, normalize=True, output_type="cupy")
