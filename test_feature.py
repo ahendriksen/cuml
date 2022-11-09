@@ -5,6 +5,8 @@ import numpy as np
 import cuml
 from cuml.linear_model import LinearRegression
 from cuml.common.array import CumlArray
+from cuml.common import input_to_cuml_array
+from cuml.common.input_utils import input_to_cupy_array
 
 n_features = 3
 n_samples = 1_000
