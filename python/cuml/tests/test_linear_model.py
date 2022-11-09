@@ -101,16 +101,21 @@ def make_classification_dataset(datatype, nrows, ncols, n_info, num_classes):
         stress_param([1000, 500])
     ],
 )
-def test_linear_regression_model(datatype, algorithm, nrows, column_info):
+@pytest.mark.parametrize(
+    "ntargets", [unit_param(2), quality_param(100), stress_param(1000)]
+)
+def test_linear_regression_model(datatype, algorithm, nrows, column_info, ntargets):
 
     if algorithm == "svd" and nrows > 46340:
         pytest.skip("svd solver is not supported for the data that has more"
                     "than 46340 rows or columns if you are using CUDA version"
                     "10.x")
+    if 1 < ntargets and algorithm != "svd":
+        pytest.skip("The multi-target fit only supports using the svd solver.")
 
     ncols, n_info = column_info
     X_train, X_test, y_train, y_test = make_regression_dataset(
-        datatype, nrows, ncols, n_info
+        datatype, nrows, ncols, n_info, n_targets=ntargets
     )
 
     # Initialization of cuML's linear regression model
@@ -132,6 +137,7 @@ def test_linear_regression_model(datatype, algorithm, nrows, column_info):
         assert array_equal(skols_predict, cuols_predict, 1e-1, with_sign=True)
 
 
+@pytest.mark.parametrize("ntargets", [unit_param(2)])
 @pytest.mark.parametrize("datatype", [np.float32, np.float64])
 @pytest.mark.parametrize("algorithm", ["eig", "svd", "qr", "svd-qr"])
 @pytest.mark.parametrize(
@@ -144,13 +150,19 @@ def test_linear_regression_model(datatype, algorithm, nrows, column_info):
         (False, False, "uniform"),
     ]
 )
-def test_weighted_linear_regression(datatype, algorithm, fit_intercept,
+def test_weighted_linear_regression(ntargets, datatype, algorithm, fit_intercept,
                                     normalize, distribution):
     nrows, ncols, n_info = 1000, 20, 10
     max_weight = 10
     noise = 20
+
+    if 1 < ntargets and normalize:
+        pytest.skip("The multi-target fit does not support normalization.")
+    if 1 < ntargets and algorithm != "svd":
+        pytest.skip("The multi-target fit only supports using the svd solver.")
+
     X_train, X_test, y_train, y_test = make_regression_dataset(
-        datatype, nrows, ncols, n_info, noise=noise
+        datatype, nrows, ncols, n_info, noise=noise, n_targets=ntargets
     )
 
     # set weight per sample to be from 1 to max_weight
