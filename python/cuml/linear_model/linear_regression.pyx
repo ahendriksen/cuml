@@ -72,15 +72,11 @@ def divide_non_zero(x1, x2):
     # linalg/detail/lstsq.cuh
     eps = 1e-10
 
+    # Do not divide by values of x2 that are smaller than eps
     mask = abs(x2) < eps
     x2[mask] = 1.
 
-    y = x1 / x2
-    # Undo division for values of x2 < eps
-
-    # print(y.shape, mask.shape, x1.shape)
-    # y[mask] = x1[mask]
-    return y
+    return x1 / x2
 
 
 def fit_multi_target(X, y, fit_intercept=True, sample_weight=None):
