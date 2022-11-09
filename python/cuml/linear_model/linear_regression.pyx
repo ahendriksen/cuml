@@ -356,7 +356,7 @@ class LinearRegression(Base,
                     check_cols=1
                 )
             else:
-                self.intercept_ = None
+                self.intercept_ = 0.0
 
             del X_m
             del y_m
