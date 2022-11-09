@@ -33,8 +33,8 @@ print("single intercept: ", lr.intercept_)
 print("multi  intercept: ", lr_multi.intercept_[0])
 
 # Predict
-y_hat_single = lr.predict(X)
-y_hat_multi = lr_multi.predict(X)
+y_hat_single = lr.predict(X[:10])
+y_hat_multi = lr_multi.predict(X[:10])
 
 print("single predict: ", y_hat_single)
 print("multi predict : ", y_hat_multi[:, 0])
