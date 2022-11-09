@@ -86,6 +86,10 @@ def fit_multi_target(X, y, fit_intercept=True, sample_weight=None):
     assert X.shape[1] > 0, "Number of columns cannot be less than one"
     assert X.shape[0] > 1, "Number of rows cannot be less than two"
 
+    if sample_weight is not None:
+        X = sample_weight[:, None] * X
+        y = sample_weight[:, None] * y
+
     if fit_intercept:
         # Add column containg ones to fit intercept.
         nrow, ncol = X.shape
@@ -93,10 +97,6 @@ def fit_multi_target(X, y, fit_intercept=True, sample_weight=None):
         X_wide[:, :ncol] = X
         X_wide[:, ncol] = 1.
         X = X_wide
-
-    if sample_weight is not None:
-        X = sample_weight[:, None] * X
-        y = sample_weight[:, None] * y
 
     u, s, vh = cp.linalg.svd(X, full_matrices=False)
 
