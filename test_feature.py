@@ -32,6 +32,13 @@ print("multi  coef: ", lr_multi.coef_[:, 0])
 print("single intercept: ", lr.intercept_)
 print("multi  intercept: ", lr_multi.intercept_[0])
 
+# Predict
+y_hat_single = lr.predict(X)
+y_hat_multi = lr_multi.predict(X)
+
+print("single predict: ", y_hat_single)
+print("multi predict : ", y_hat_multi)
+
 # Fail on normalize
 lr_multi = LinearRegression(fit_intercept=True, normalize=True, output_type="cupy")
 try:
@@ -40,14 +47,14 @@ except ValueError:
     print("multi: Succesfully failed to normalize")
 
 
-def predict_multi_target(X, coef, intercept=None):
-    assert X.ndim == 2
-    assert coef.ndim == 2
+# def predict_multi_target(X, coef, intercept=None):
+#     assert X.ndim == 2
+#     assert coef.ndim == 2
 
-    if intercept is None:
-        return X @ coef
-    else:
-        return X @ coef + intercept
+#     if intercept is None:
+#         return X @ coef
+#     else:
+#         return X @ coef + intercept
 
-def pred(X, lr):
-    return predict_multi_target(X, lr.coef_, lr.intercept_)
+# def pred(X, lr):
+#     return predict_multi_target(X, lr.coef_, lr.intercept_)
