@@ -356,7 +356,7 @@ class LinearRegression(Base,
                     check_cols=1
                 )
             else:
-                self.intercept_ = 0.0
+                self.intercept_ = CumlArray.zeros(y_cols, dtype=self.dtype)
 
             del X_m
             del y_m
