@@ -68,18 +68,18 @@ class LinearPredictMixin:
         Predicts `y` values for `X`.
 
         """
-        coef, n_feat, n_targets, _ = input_to_cupy_array(self.coef_)
+        coef_cp, n_feat, n_targets, _ = input_to_cupy_array(self.coef_)
         if 1 < n_targets:
             # Handle multi-target prediction in Python.
-            X_cupy = input_to_cupy_array(
+            X_cp = input_to_cupy_array(
                 X,
                 check_dtype=self.dtype,
                 convert_to_dtype=(self.dtype if convert_dtype else None),
                 check_cols=self.n_cols
             )
-            intercept = input_to_cupy_array(self.intercept_).array
-            preds_cupy = X @ coef + intercept
-            preds = input_to_cuml_array(preds_cupy).array
+            intercept_cp = input_to_cupy_array(self.intercept_).array
+            preds_cp = X_cp @ coef_cp + intercept_cp
+            preds = input_to_cuml_array(preds_cp).array
             return preds
 
         X_m, n_rows, n_cols, dtype = \
