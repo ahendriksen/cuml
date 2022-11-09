@@ -87,6 +87,7 @@ def fit_multi_target(X, y, fit_intercept=True, sample_weight=None):
     assert X.shape[0] > 1, "Number of rows cannot be less than two"
 
     if sample_weight is not None:
+        sample_weight = cp.sqrt(sample_weight)
         X = sample_weight[:, None] * X
         y = sample_weight[:, None] * y
 
