@@ -348,12 +348,16 @@ class LinearRegression(Base,
                 check_rows=self.n_cols,
                 check_cols=y_cols
             )
-            self.intercept_, _, _, _ = input_to_cuml_array(
-                intercept,
-                check_dtype=self.dtype,
-                check_rows=y_cols,
-                check_cols=1
-            )
+            if self.fit_intercept:
+                self.intercept_, _, _, _ = input_to_cuml_array(
+                    intercept,
+                    check_dtype=self.dtype,
+                    check_rows=y_cols,
+                    check_cols=1
+                )
+            else:
+                self.intercept_ = None
+
             del X_m
             del y_m
             if sample_weight is not None:
