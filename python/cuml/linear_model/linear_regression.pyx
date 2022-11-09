@@ -329,13 +329,21 @@ class LinearRegression(Base,
                     "multiple columns."
                 )
 
-            X_cupy = input_to_cupy_array(X).array
-            y_cupy = input_to_cupy_array(y).array
+            X_cupy = input_to_cupy_array(
+                X,
+                convert_to_dtype=(self.dtype if convert_dtype else None),
+            ).array
+            y_cupy = input_to_cupy_array(
+                y,
+                convert_to_dtype=(self.dtype if convert_dtype else None),
+            ).array
             if sample_weight is None:
                 sample_weight_cupy = None
             else:
-                sample_weight_cupy = input_to_cupy_array(sample_weight).array
-
+                sample_weight_cupy = input_to_cupy_array(
+                    sample_weight,
+                    convert_to_dtype=(self.dtype if convert_dtype else None),
+                ).array
             coef, intercept = fit_multi_target(
                 X_cupy,
                 y_cupy,
