@@ -18,6 +18,7 @@
 
 import ctypes
 import numpy as np
+import cupy as cp
 import warnings
 
 from numba import cuda
@@ -37,6 +38,7 @@ from cuml.linear_model.base import LinearPredictMixin
 from pylibraft.common.handle cimport handle_t
 from cuml.common import input_to_cuml_array
 from cuml.common.mixins import FMajorInputTagMixin
+from cuml.common.input_utils import input_to_cupy_array
 
 cdef extern from "cuml/linear_model/glm.hpp" namespace "ML::GLM":
 
@@ -64,6 +66,50 @@ cdef extern from "cuml/linear_model/glm.hpp" namespace "ML::GLM":
                      int algo,
                      double *sample_weight) except +
 
+
+def divide_non_zero(x1, x2):
+    # Value chosen to be consistent with the RAFT implementation in
+    # linalg/detail/lstsq.cuh
+    eps = 1e-10
+
+    mask = abs(x2) < eps
+    x2[mask] = 1.
+
+    y = x1 / x2
+    # Undo division for values of x2 < eps
+
+    # print(y.shape, mask.shape, x1.shape)
+    # y[mask] = x1[mask]
+    return y
+
+
+def fit_multi_target(X, y, fit_intercept=True, sample_weight=None):
+    assert X.ndim == 2
+    assert y.ndim == 2
+
+    assert X.shape[1] > 0, "Number of columns cannot be less than one"
+    assert X.shape[0] > 1, "Number of rows cannot be less than two"
+
+    if fit_intercept:
+        # Add column containg ones to fit intercept.
+        nrow, ncol = X.shape
+        X_wide = cp.empty_like(X, shape=(nrow, ncol + 1))
+        X_wide[:, :ncol] = X
+        X_wide[:, ncol] = 1.
+        X = X_wide
+
+    if sample_weight is not None:
+        X = sample_weight[:, None] * X
+        y = sample_weight[:, None] * y
+
+    u, s, vh = cp.linalg.svd(X, full_matrices=False)
+
+    params = vh.T @ divide_non_zero(u.T @ y, s[:, None])
+
+    coef = params[:-1] if fit_intercept else params
+    intercept = params[-1] if fit_intercept else None
+
+    return coef, intercept
 
 class LinearRegression(Base,
                        RegressorMixin,
@@ -239,11 +285,12 @@ class LinearRegression(Base,
             input_to_cuml_array(X, check_dtype=[np.float32, np.float64])
         X_ptr = X_m.ptr
 
-        y_m, _, _, _ = \
+        y_m, _, y_cols, _ = \
             input_to_cuml_array(y, check_dtype=self.dtype,
                                 convert_to_dtype=(self.dtype if convert_dtype
                                                   else None),
-                                check_rows=n_rows, check_cols=1)
+                                check_rows=n_rows)
+
         y_ptr = y_m.ptr
 
         if sample_weight is not None:
@@ -270,6 +317,47 @@ class LinearRegression(Base,
                           "column currently.", UserWarning)
             self.algo = 0
 
+        if 1 < y_cols:
+            # In the cuml C++ layer, there is no support yet for multi-target
+            # regression, i.e., a y vector with multiple columns.
+            # We implement the regression in Python here.
+
+            # TODO: check algorithm and warn if we change it
+            # TODO: fail on normalize
+
+            X_cupy = input_to_cupy_array(X).array
+            y_cupy = input_to_cupy_array(y).array
+            if sample_weight is None:
+                sample_weight_cupy = None
+            else:
+                sample_weight_cupy = input_to_cupy_array(sample_weight).array
+
+            coef, intercept = fit_multi_target(
+                X_cupy,
+                y_cupy,
+                fit_intercept=self.fit_intercept,
+                sample_weight=sample_weight_cupy
+            )
+            self.coef_, _, _, _ = input_to_cuml_array(
+                coef,
+                check_dtype=self.dtype,
+                check_rows=self.n_cols,
+                check_cols=y_cols
+            )
+            self.intercept_, _, _, _ = input_to_cuml_array(
+                intercept,
+                check_dtype=self.dtype,
+                check_rows=y_cols,
+                check_cols=1
+            )
+            del X_m
+            del y_m
+            if sample_weight is not None:
+                del sample_weight_m
+
+            return self
+
+        # Handle single-target case where y_cols == 1.
         self.coef_ = CumlArray.zeros(self.n_cols, dtype=self.dtype)
         cdef uintptr_t coef_ptr = self.coef_.ptr
 
