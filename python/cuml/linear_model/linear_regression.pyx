@@ -83,8 +83,15 @@ def fit_multi_target(X, y, fit_intercept=True, sample_weight=None):
     assert X.ndim == 2
     assert y.ndim == 2
 
-    assert X.shape[1] > 0, "Number of columns cannot be less than one"
-    assert X.shape[0] > 1, "Number of rows cannot be less than two"
+    x_rows, x_cols = X.shape
+    if x_cols == 0:
+        raise ValueError(
+            "Number of columns cannot be less than one"
+        )
+    if x_rows < 2:
+        raise ValueError(
+            "Number of rows cannot be less than two"
+        )
 
     if fit_intercept:
         # Add column containg ones to fit intercept.
