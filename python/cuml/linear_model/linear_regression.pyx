@@ -327,7 +327,7 @@ class LinearRegression(Base,
             if sample_weight is not None:
                 del sample_weight_m
 
-            return self._fit_multi_target(X, y, sample_weight)
+            return self._fit_multi_target(X, y, convert_dtype, sample_weight)
 
         self.coef_ = CumlArray.zeros(self.n_cols, dtype=self.dtype)
         cdef uintptr_t coef_ptr = self.coef_.ptr
@@ -375,7 +375,7 @@ class LinearRegression(Base,
 
         return self
 
-    def _fit_multi_target(self, X, y, sample_weight=None):
+    def _fit_multi_target(self, X, y, convert_dtype=True, sample_weight=None):
         # In the cuml C++ layer, there is no support yet for multi-target
         # regression, i.e., a y vector with multiple columns.
         # We implement the regression in Python here.
@@ -395,10 +395,10 @@ class LinearRegression(Base,
             X,
             convert_to_dtype=(self.dtype if convert_dtype else None),
         ).array
-        y_cupy = input_to_cupy_array(
+        y_cupy, _, y_cols, _ = input_to_cupy_array(
             y,
             convert_to_dtype=(self.dtype if convert_dtype else None),
-        ).array
+        )
         if sample_weight is None:
             sample_weight_cupy = None
         else:
