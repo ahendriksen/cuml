@@ -327,7 +327,7 @@ class LinearRegression(Base,
             if sample_weight is not None:
                 del sample_weight_m
 
-            return _fit_multi_target(self, X, y, sample_weight)
+            return self._fit_multi_target(X, y, sample_weight)
 
         self.coef_ = CumlArray.zeros(self.n_cols, dtype=self.dtype)
         cdef uintptr_t coef_ptr = self.coef_.ptr
