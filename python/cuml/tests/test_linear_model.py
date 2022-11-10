@@ -149,8 +149,9 @@ def test_linear_regression_model(datatype, algorithm, nrows, column_info, ntarge
         (False, False, "uniform"),
     ]
 )
-def test_weighted_linear_regression(ntargets, datatype, algorithm, fit_intercept,
-                                    normalize, distribution):
+def test_weighted_linear_regression(
+    ntargets, datatype, algorithm, fit_intercept, normalize, distribution
+):
     nrows, ncols, n_info = 1000, 20, 10
     max_weight = 10
     noise = 20
